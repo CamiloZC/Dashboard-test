@@ -25,14 +25,10 @@ const RevenueByDateChart = ( props ) => {
 
     const customerTypes = ['Existing', 'New'];
 
-    console.log(customerTypes)
-
     const chartData = groupedData ? Object.entries(groupedData).map(([date, values]) => {
         const data = customerTypes.map((customer_type) => values[customer_type] || 0);
         return { order_date: date, data };
     }) : null;
-
-    console.log(chartData);
 
     useEffect(() => {
         setOptions({
@@ -109,13 +105,12 @@ const RevenueByDateChart = ( props ) => {
                     name: 'New Customer Revenue',
                     data: type === "All" ? chartData?.map((item) => parseFloat((item.data[1].revenue).toFixed(3)))
                      : 
-                    type === "New" ? chartData?.map((item) => parseFloat((item.data[0].revenue).toFixed(3))) : [],
+                    type === "New" ? chartData?.map((item) => parseFloat((item.data[1].revenue).toFixed(3))) : [],
                 },
                 {
                     type: 'column',
                     name: 'Existing Customer Revenue',
-                    visible: type === "New" ? false : true,
-                    data: type === "Existing" || "All" ? chartData?.map((item) => parseFloat((item.data[0].revenue).toFixed(3))) 
+                    data: type === "New" ? [] : type === "All" || "Existing" ? chartData?.map((item) => parseFloat((item.data[0].revenue).toFixed(3))) 
                     : [],
                 
                     dataLabels: {
@@ -132,8 +127,8 @@ const RevenueByDateChart = ( props ) => {
                     name: 'Total Orders',
                     data: type === "All" ? chartData?.map((item) => parseInt(item.data[0]?.orders) + parseInt(item.data[1]?.orders))
                      : 
-                    type === "New" || "Existing" ? chartData?.map((item) => parseInt(item.data[0]?.orders)) 
-                     :
+                    type === "New" ? chartData?.map((item) => parseInt(item.data[1]?.orders)) 
+                     : type === "Existing" ? chartData?.map((item) => parseInt(item.data[0]?.orders)) :
                     null,
                     marker: {
                         lineWidth: 2,
@@ -147,7 +142,7 @@ const RevenueByDateChart = ( props ) => {
                     name: 'New Customer Orders',
                     data: type === "All" ? chartData?.map((item) => parseFloat((item.data[1].orders).toFixed(3)))
                      : 
-                     type === "New" ? chartData?.map((item) => parseFloat((item.data[0].orders).toFixed(3))) : [],
+                     type === "New" ? chartData?.map((item) => parseFloat((item.data[1].orders).toFixed(3))) : [],
                     marker: {
                         lineWidth: 2,
                         lineColor: Highcharts.getOptions().colors[3],
