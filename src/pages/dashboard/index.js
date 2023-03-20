@@ -1,57 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+import { useSelector } from 'react-redux';
+import { useData } from 'hooks/useData';
 
 // material-ui
-import {
-    Avatar,
-    AvatarGroup,
-    Box,
-    Button,
-    Grid,
-    List,
-    ListItemAvatar,
-    ListItemButton,
-    ListItemSecondaryAction,
-    ListItemText,
-    MenuItem,
-    Stack,
-    TextField,
-    Typography
-} from '@mui/material';
+import { Box, Button, Grid, Stack, Typography } from '@mui/material';
 
-// project import
-import OrdersTable from './OrdersTable';
-import IncomeAreaChart from './IncomeAreaChart';
-import MonthlyBarChart from './MonthlyBarChart';
-import ReportAreaChart from './ReportAreaChart';
-import SalesColumnChart from './SalesColumnChart';
 import MainCard from 'components/MainCard';
 import AnalyticEcommerce from 'components/cards/statistics/AnalyticEcommerce';
 
-// assets
-import { GiftOutlined, MessageOutlined, SettingOutlined } from '@ant-design/icons';
-import avatar1 from 'assets/images/users/avatar-1.png';
-import avatar2 from 'assets/images/users/avatar-2.png';
-import avatar3 from 'assets/images/users/avatar-3.png';
-import avatar4 from 'assets/images/users/avatar-4.png';
+import RevenueBySourceBarChart from './RevenueBySourceBarChart';
+import RevenueByDateChart from './RevenueByDateChart';
 
-// avatar style
-const avatarSX = {
-    width: 36,
-    height: 36,
-    fontSize: '1rem'
-};
+import { getDaysAgoData, getrPrevDaysAgoData, sortedDataByDate } from './utils/sorterAndFilter';
+import RevenueByWeekAndSourceChart from './RevenueBySourceStackedChart';
+import ReactDatePicker from 'react-datepicker';
+import './styles/index.scss'
+import 'react-datepicker/dist/react-datepicker.css';
 
-// action style
-const actionSX = {
-    mt: 0.75,
-    ml: 1,
-    top: 'auto',
-    right: 'auto',
-    alignSelf: 'flex-start',
-    transform: 'none'
-};
 
-// sales report status
 const status = [
     {
         value: 'today',
@@ -69,277 +36,179 @@ const status = [
 
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
+
 const DashboardDefault = () => {
-    const [value, setValue] = useState('today');
-    const [slot, setSlot] = useState('week');
+    const [view, setView] = useState('daily');
+
+    useData();
+
+    const data = useSelector(state => state.Data.data)
+    
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
+    const [numDays, setNumDays] = useState(30);
+    const [filteredData, setFilteredData] = useState([]);
+    const [prevData, setPrevData] = useState([]);
+    const [type, setType] = useState("All");
+
+    const rangedData = getDaysAgoData(data);
+    const prevRangedData = getrPrevDaysAgoData(data);
+
+    const handleDateChange = (date, type) => {
+        if (type === 'start') {
+            setStartDate(date);
+        } else if (type === 'end') {
+            setEndDate(date);
+        }
+    };
+      
+    useEffect(() => {
+        if (startDate && endDate) {
+            const filtered = data.filter((item) => {
+                const itemDate = new Date(item.order_date);
+                return itemDate >= startDate && itemDate <= endDate;
+            });
+            setFilteredData(sortedDataByDate(filtered));
+            setNumDays(Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1);
+        }else{
+            setFilteredData(sortedDataByDate(rangedData));
+        }
+    }, [data, startDate, endDate]);
+
+    useEffect(() => {
+        if (startDate && endDate) {
+            let t = startDate;
+            let d = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 30);         
+            const prev = data.filter((item) => {
+                const itemDate = new Date(item.order_date);
+                return itemDate > d && itemDate < t;
+            })
+            setPrevData(sortedDataByDate(prev));
+        }else{
+            setPrevData(sortedDataByDate(prevRangedData));
+        }
+    }, [data, startDate, endDate]);
+
+    const parsedData = filteredData?.map((item) => ({
+        ...item,
+        order_revenue: parseFloat(parseFloat(item.order_revenue).toFixed(3)),
+        num_orders: parseInt(item.num_orders),
+        item_quantity: parseInt(item.item_quantity)
+    }));
+
+    const prevParsedData = prevData?.map((item) => ({
+        ...item,
+        order_revenue: parseFloat(parseFloat(item.order_revenue).toFixed(3)),
+        num_orders: parseInt(item.num_orders),
+        item_quantity: parseInt(item.item_quantity)
+    }));
+
+    const filteredDataByType = parsedData?.filter((item) => {
+        if (type === "All") {
+            return true;
+        } else {
+            return item.customer_type === type;
+        }
+    });
+
+    const filteredPrevDataByType = prevParsedData?.filter((item) => {
+        if (type === "All") {
+            return true;
+        } else {
+            return item.customer_type === type;
+        }
+    });
 
     return (
-        <Grid container rowSpacing={4.5} columnSpacing={2.75}>
-            {/* row 1 */}
-            <Grid item xs={12} sx={{ mb: -2.25 }}>
-                <Typography variant="h5">Dashboard</Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={3}>
-                <AnalyticEcommerce title="Total Page Views" count="4,42,236" percentage={59.3} extra="35,000" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={3}>
-                <AnalyticEcommerce title="Total Users" count="78,250" percentage={70.5} extra="8,900" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={3}>
-                <AnalyticEcommerce title="Total Order" count="18,800" percentage={27.4} isLoss color="warning" extra="1,943" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={3}>
-                <AnalyticEcommerce title="Total Sales" count="$35,078" percentage={27.4} isLoss color="warning" extra="$20,395" />
-            </Grid>
+        <Grid container rowSpacing={4.5} columnSpacing={2.75} p={5}>
 
-            <Grid item md={8} sx={{ display: { sm: 'none', md: 'block', lg: 'none' } }} />
-
-            {/* row 2 */}
-            <Grid item xs={12} md={7} lg={8}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                        <Typography variant="h5">Unique Visitor</Typography>
-                    </Grid>
-                    <Grid item>
-                        <Stack direction="row" alignItems="center" spacing={0}>
-                            <Button
-                                size="small"
-                                onClick={() => setSlot('month')}
-                                color={slot === 'month' ? 'primary' : 'secondary'}
-                                variant={slot === 'month' ? 'outlined' : 'text'}
-                            >
-                                Month
-                            </Button>
-                            <Button
-                                size="small"
-                                onClick={() => setSlot('week')}
-                                color={slot === 'week' ? 'primary' : 'secondary'}
-                                variant={slot === 'week' ? 'outlined' : 'text'}
-                            >
-                                Week
-                            </Button>
-                        </Stack>
-                    </Grid>
-                </Grid>
+            <Grid item xs={24} md={12} lg={12}>
                 <MainCard content={false} sx={{ mt: 1.5 }}>
-                    <Box sx={{ pt: 1, pr: 2 }}>
-                        <IncomeAreaChart slot={slot} />
-                    </Box>
-                </MainCard>
-            </Grid>
-            <Grid item xs={12} md={5} lg={4}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                        <Typography variant="h5">Income Overview</Typography>
-                    </Grid>
-                    <Grid item />
-                </Grid>
-                <MainCard sx={{ mt: 2 }} content={false}>
-                    <Box sx={{ p: 3, pb: 0 }}>
-                        <Stack spacing={2}>
-                            <Typography variant="h6" color="textSecondary">
-                                This Week Statistics
-                            </Typography>
-                            <Typography variant="h3">$7,650</Typography>
-                        </Stack>
-                    </Box>
-                    <MonthlyBarChart />
-                </MainCard>
-            </Grid>
-
-            {/* row 3 */}
-            <Grid item xs={12} md={7} lg={8}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                        <Typography variant="h5">Recent Orders</Typography>
-                    </Grid>
-                    <Grid item />
-                </Grid>
-                <MainCard sx={{ mt: 2 }} content={false}>
-                    <OrdersTable />
-                </MainCard>
-            </Grid>
-            <Grid item xs={12} md={5} lg={4}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                        <Typography variant="h5">Analytics Report</Typography>
-                    </Grid>
-                    <Grid item />
-                </Grid>
-                <MainCard sx={{ mt: 2 }} content={false}>
-                    <List sx={{ p: 0, '& .MuiListItemButton-root': { py: 2 } }}>
-                        <ListItemButton divider>
-                            <ListItemText primary="Company Finance Growth" />
-                            <Typography variant="h5">+45.14%</Typography>
-                        </ListItemButton>
-                        <ListItemButton divider>
-                            <ListItemText primary="Company Expenses Ratio" />
-                            <Typography variant="h5">0.58%</Typography>
-                        </ListItemButton>
-                        <ListItemButton>
-                            <ListItemText primary="Business Risk Cases" />
-                            <Typography variant="h5">Low</Typography>
-                        </ListItemButton>
-                    </List>
-                    <ReportAreaChart />
-                </MainCard>
-            </Grid>
-
-            {/* row 4 */}
-            <Grid item xs={12} md={7} lg={8}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                        <Typography variant="h5">Sales Report</Typography>
-                    </Grid>
-                    <Grid item>
-                        <TextField
-                            id="standard-select-currency"
+                    <Stack spacing={0.5} direction="row" ml={5} gap={5} height={50} alignItems="center">
+                        <Typography variant="h5">Filters</Typography>
+                        <Typography variant="h8" mr={0}>Customer type:</Typography>
+                        <select value={type} onChange={(e) => setType(e.target.value)}>
+                            <option value="All">All</option>
+                            <option value="New">New</option>
+                            <option value="Existing">Existing</option>
+                        </select>
+                        <Typography variant="h8" mr={0}>Data range:</Typography>
+                        <ReactDatePicker
+                            selected={startDate}
+                            selectsStart
+                            onChange={(date) => handleDateChange(date, 'start')}
+                            placeholderText="Start Date"
+                        />
+                        <ReactDatePicker
+                            selected={endDate}
+                            onChange={(date) => handleDateChange(date, 'end')}
+                            placeholderText="End Date"
+                        />
+                        <Typography variant="h8" pl={20}>View options:</Typography>
+                        <Button
                             size="small"
-                            select
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            sx={{ '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
+                            onClick={() => setView('monthly')}
+                            color={view === 'monthly' ? 'primary' : 'secondary'}
+                            variant={view === 'monthly' ? 'outlined' : 'text'}
                         >
-                            {status.map((option) => (
-                                <MenuItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    </Grid>
-                </Grid>
-                <MainCard sx={{ mt: 1.75 }}>
-                    <Stack spacing={1.5} sx={{ mb: -12 }}>
-                        <Typography variant="h6" color="secondary">
-                            Net Profit
-                        </Typography>
-                        <Typography variant="h4">$1560</Typography>
-                    </Stack>
-                    <SalesColumnChart />
-                </MainCard>
-            </Grid>
-            <Grid item xs={12} md={5} lg={4}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Grid item>
-                        <Typography variant="h5">Transaction History</Typography>
-                    </Grid>
-                    <Grid item />
-                </Grid>
-                <MainCard sx={{ mt: 2 }} content={false}>
-                    <List
-                        component="nav"
-                        sx={{
-                            px: 0,
-                            py: 0,
-                            '& .MuiListItemButton-root': {
-                                py: 1.5,
-                                '& .MuiAvatar-root': avatarSX,
-                                '& .MuiListItemSecondaryAction-root': { ...actionSX, position: 'relative' }
-                            }
-                        }}
-                    >
-                        <ListItemButton divider>
-                            <ListItemAvatar>
-                                <Avatar
-                                    sx={{
-                                        color: 'success.main',
-                                        bgcolor: 'success.lighter'
-                                    }}
-                                >
-                                    <GiftOutlined />
-                                </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText primary={<Typography variant="subtitle1">Order #002434</Typography>} secondary="Today, 2:00 AM" />
-                            <ListItemSecondaryAction>
-                                <Stack alignItems="flex-end">
-                                    <Typography variant="subtitle1" noWrap>
-                                        + $1,430
-                                    </Typography>
-                                    <Typography variant="h6" color="secondary" noWrap>
-                                        78%
-                                    </Typography>
-                                </Stack>
-                            </ListItemSecondaryAction>
-                        </ListItemButton>
-                        <ListItemButton divider>
-                            <ListItemAvatar>
-                                <Avatar
-                                    sx={{
-                                        color: 'primary.main',
-                                        bgcolor: 'primary.lighter'
-                                    }}
-                                >
-                                    <MessageOutlined />
-                                </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                                primary={<Typography variant="subtitle1">Order #984947</Typography>}
-                                secondary="5 August, 1:45 PM"
-                            />
-                            <ListItemSecondaryAction>
-                                <Stack alignItems="flex-end">
-                                    <Typography variant="subtitle1" noWrap>
-                                        + $302
-                                    </Typography>
-                                    <Typography variant="h6" color="secondary" noWrap>
-                                        8%
-                                    </Typography>
-                                </Stack>
-                            </ListItemSecondaryAction>
-                        </ListItemButton>
-                        <ListItemButton>
-                            <ListItemAvatar>
-                                <Avatar
-                                    sx={{
-                                        color: 'error.main',
-                                        bgcolor: 'error.lighter'
-                                    }}
-                                >
-                                    <SettingOutlined />
-                                </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText primary={<Typography variant="subtitle1">Order #988784</Typography>} secondary="7 hours ago" />
-                            <ListItemSecondaryAction>
-                                <Stack alignItems="flex-end">
-                                    <Typography variant="subtitle1" noWrap>
-                                        + $682
-                                    </Typography>
-                                    <Typography variant="h6" color="secondary" noWrap>
-                                        16%
-                                    </Typography>
-                                </Stack>
-                            </ListItemSecondaryAction>
-                        </ListItemButton>
-                    </List>
-                </MainCard>
-                <MainCard sx={{ mt: 2 }}>
-                    <Stack spacing={3}>
-                        <Grid container justifyContent="space-between" alignItems="center">
-                            <Grid item>
-                                <Stack>
-                                    <Typography variant="h5" noWrap>
-                                        Help & Support Chat
-                                    </Typography>
-                                    <Typography variant="caption" color="secondary" noWrap>
-                                        Typical replay within 5 min
-                                    </Typography>
-                                </Stack>
-                            </Grid>
-                            <Grid item>
-                                <AvatarGroup sx={{ '& .MuiAvatar-root': { width: 32, height: 32 } }}>
-                                    <Avatar alt="Remy Sharp" src={avatar1} />
-                                    <Avatar alt="Travis Howard" src={avatar2} />
-                                    <Avatar alt="Cindy Baker" src={avatar3} />
-                                    <Avatar alt="Agnes Walker" src={avatar4} />
-                                </AvatarGroup>
-                            </Grid>
-                        </Grid>
-                        <Button size="small" variant="contained" sx={{ textTransform: 'capitalize' }}>
-                            Need Help?
+                            Monthly
+                        </Button>
+                        <Button
+                            size="small"
+                            onClick={() => setView('daily')}
+                            color={view === 'daily' ? 'primary' : 'secondary'}
+                            variant={view === 'daily' ? 'outlined' : 'text'}
+                        >
+                            Daily
                         </Button>
                     </Stack>
                 </MainCard>
             </Grid>
+
+            <Grid item xs={12} sx={{ mb: -2.25 }}>
+                <Typography variant="h5">Revenue Overview</Typography>
+            </Grid>
+            <Grid item xs={12} sm={12} md={8} lg={6}>
+                <AnalyticEcommerce 
+                    title="General Metrics" 
+                    isGeneral={true} 
+                    data={filteredDataByType ? filteredDataByType : rangedData} 
+                    prevData={filteredPrevDataByType} 
+                    numDays={numDays}
+                />
+            </Grid>
+            <Grid item xs={12} sm={12} md={8} lg={6}>
+                <AnalyticEcommerce 
+                    title="Average Performance" 
+                    isAverage={true} 
+                    data={filteredDataByType ? filteredDataByType : rangedData} 
+                    prevData={filteredPrevDataByType} 
+                    numDays={numDays}
+                />
+            </Grid>
+
+            <Grid item md={8} sx={{ display: { sm: 'none', md: 'block', lg: 'none' } }} />
+
+            <Grid item xs={24} md={12} lg={12}>
+                <MainCard content={false} sx={{ mt: 1.5 }}>
+                    <Box sx={{ pt: 1, pr: 2 }}>
+                        <RevenueByDateChart data={filteredDataByType ? filteredDataByType : rangedData} type={type} view={view}/>
+                    </Box>
+                </MainCard>
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={6}>
+                <MainCard sx={{ mt: 1.75 }}>
+                    <RevenueByWeekAndSourceChart data={filteredDataByType ? filteredDataByType : rangedData}/>
+                </MainCard>
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={6}>
+                <MainCard sx={{ mt: 1.75 }}>
+                    <RevenueBySourceBarChart data={filteredDataByType ? filteredDataByType : rangedData} view={view}/>
+                </MainCard>
+            </Grid>
+
         </Grid>
     );
 };
