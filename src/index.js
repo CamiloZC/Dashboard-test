@@ -15,7 +15,7 @@ const container = document.getElementById('root');
 const root = createRoot(container); // createRoot(container!) if you use TypeScript
 root.render(
     <StrictMode>
-        <BrowserRouter basename="/free">
+        <BrowserRouter basename="/dashboard">
             <Provider store={store}>
                 <App />
             </Provider>
