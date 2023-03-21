@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/Dashboard-test/static/css/main.e367b0e1.css",
+    "main.js": "/Dashboard-test/static/js/main.703ec33e.js",
+    "static/css/314.f3014e08.chunk.css": "/Dashboard-test/static/css/314.f3014e08.chunk.css",
+    "static/js/314.5e148b0b.chunk.js": "/Dashboard-test/static/js/314.5e148b0b.chunk.js",
+    "static/js/139.1724bce8.chunk.js": "/Dashboard-test/static/js/139.1724bce8.chunk.js",
+    "static/js/165.e0208c91.chunk.js": "/Dashboard-test/static/js/165.e0208c91.chunk.js",
+    "static/js/346.e434d97b.chunk.js": "/Dashboard-test/static/js/346.e434d97b.chunk.js",
+    "static/js/819.58bf6487.chunk.js": "/Dashboard-test/static/js/819.58bf6487.chunk.js",
+    "static/js/522.4ba59a62.chunk.js": "/Dashboard-test/static/js/522.4ba59a62.chunk.js",
+    "static/js/360.cc98416c.chunk.js": "/Dashboard-test/static/js/360.cc98416c.chunk.js",
+    "static/js/868.25b504bb.chunk.js": "/Dashboard-test/static/js/868.25b504bb.chunk.js",
+    "static/js/308.30a361ed.chunk.js": "/Dashboard-test/static/js/308.30a361ed.chunk.js",
+    "static/media/revenue-by-date-full.csv": "/Dashboard-test/static/media/revenue-by-date-full.98f0c4ee5f9c18402a93.csv",
+    "index.html": "/Dashboard-test/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.e367b0e1.css",
+    "static/js/main.703ec33e.js"
+  ]
+}
